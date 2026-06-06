@@ -66,7 +66,13 @@ export class AuthService {
   }
 
   private readUser(): AppUser | null {
-    const raw = localStorage.getItem(USER_KEY);
-    return raw ? (JSON.parse(raw) as AppUser) : null;
+    try {
+      const raw = localStorage.getItem(USER_KEY);
+      if (!raw || raw === 'undefined' || raw === 'null') return null;
+      return JSON.parse(raw) as AppUser;
+    } catch {
+      localStorage.removeItem(USER_KEY);
+      return null;
+    }
   }
 }

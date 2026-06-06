@@ -1,4 +1,5 @@
 using System.Text;
+using System.Text.Json;
 using MediConnect.Application;
 using MediConnect.Application.Common.Interfaces;
 using MediConnect.Infrastructure;
@@ -24,7 +25,9 @@ if (!string.IsNullOrWhiteSpace(port))
 }
 
 // ----- Services -----
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(opts =>
+        opts.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase);
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddEndpointsApiExplorer();
 
@@ -70,12 +73,27 @@ builder.Services.AddAuthorization();
 // ----- CORS for the Angular SPA -----
 const string SpaCors = "SpaCors";
 builder.Services.AddCors(options =>
-    options.AddPolicy(SpaCors, policy => policy
-        .WithOrigins(builder.Configuration.GetSection("Cors:Origins").Get<string[]>()
-            ?? new[] { "http://localhost:4200" })
-        .AllowAnyHeader()
-        .AllowAnyMethod()
-        .AllowCredentials()));
+    options.AddPolicy(SpaCors, policy =>
+    {
+        var configured = builder.Configuration
+            .GetSection("Cors:Origins").Get<string[]>() ?? [];
+        policy
+            .SetIsOriginAllowed(origin =>
+            {
+                if (!Uri.TryCreate(origin, UriKind.Absolute, out var uri)) return false;
+                var host = uri.Host;
+                // Local development
+                if (host is "localhost" or "127.0.0.1") return true;
+                // Any Render.com subdomain — covers random suffixes like -qi9s, -abc1, etc.
+                if (host.EndsWith(".onrender.com", StringComparison.OrdinalIgnoreCase)) return true;
+                // Explicit origins from config / env vars
+                return configured.Any(o =>
+                    o.Equals(origin, StringComparison.OrdinalIgnoreCase));
+            })
+            .AllowAnyHeader()
+            .AllowAnyMethod()
+            .AllowCredentials();
+    }));
 
 // ----- Swagger with JWT support -----
 builder.Services.AddSwaggerGen(c =>
