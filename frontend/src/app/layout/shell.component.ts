@@ -121,13 +121,13 @@ interface NavItem {
             </span>
           </button>
           <div class="relative">
-            <button (click)="menuOpen.update(v=>!v)"
+            <button (click)="toggleMenu()"
                     class="flex items-center gap-2 pl-2 pr-3 py-1.5 rounded-xl hover:bg-slate-100 transition-colors"
                     style="border:1px solid #e2e8f0;background:transparent;cursor:pointer">
               <div class="w-7 h-7 rounded-full bg-brand-100 flex items-center justify-center">
                 <span class="material-symbols-outlined text-brand-600" style="font-size:.95rem">person</span>
               </div>
-              <span class="text-sm font-medium text-slate-700 hidden sm:block">{{ user()?.fullName?.split(' ')[0] }}</span>
+              <span class="text-sm font-medium text-slate-700 hidden sm:block">{{ firstName() }}</span>
               <span class="material-symbols-outlined text-slate-400" style="font-size:1rem">expand_more</span>
             </button>
             @if (menuOpen()) {
@@ -166,6 +166,11 @@ export class ShellComponent {
     return `Good ${part}, ${name}`;
   });
 
+  readonly firstName = computed(() => {
+    const parts = this.user()?.fullName?.split(' ') ?? [];
+    return parts.length > 0 ? parts[0] : '';
+  });
+
   readonly today = computed(() =>
     new Date().toLocaleDateString('en-IN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
   );
@@ -179,6 +184,8 @@ export class ShellComponent {
     this.darkMode.update((v: boolean) => !v);
     document.documentElement.classList.toggle('dark', this.darkMode());
   }
+
+  toggleMenu(): void { this.menuOpen.set(!this.menuOpen()); }
 
   logout(): void {
     this.auth.logout();
