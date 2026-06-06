@@ -134,7 +134,7 @@ import { AuthService } from '../../core/services/auth.service';
               />
               <button
                 type="button"
-                (click)="showPwd.update(v => !v)"
+                (click)="togglePwd()"
                 class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
                 style="background:transparent;border:none;padding:0;cursor:pointer"
               >
@@ -235,6 +235,8 @@ export class LoginComponent {
   fillDemo(email: string, password: string): void {
     this.form.patchValue({ email, password });
   }
+
+  togglePwd(): void { this.showPwd.set(!this.showPwd()); }
 
   submit(): void {
     if (this.form.invalid) { this.form.markAllAsTouched(); return; }

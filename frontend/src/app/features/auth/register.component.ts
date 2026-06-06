@@ -75,7 +75,7 @@ import { AuthService } from '../../core/services/auth.service';
                 <input [type]="showPwd() ? 'text' : 'password'" formControlName="password"
                   placeholder="Min 8 chars" class="mc-input" style="padding-right:2.75rem"
                   [class.mc-input--error]="f['password'].invalid && f['password'].touched" />
-                <button type="button" (click)="showPwd.update(v=>!v)"
+                <button type="button" (click)="togglePwd()"
                   style="position:absolute;right:.75rem;top:50%;transform:translateY(-50%);background:transparent;border:none;padding:0;cursor:pointer;color:#94a3b8">
                   <span class="material-symbols-outlined" style="font-size:1.1rem">
                     {{ showPwd() ? 'visibility_off' : 'visibility' }}
@@ -174,6 +174,8 @@ export class RegisterComponent {
   });
 
   get f() { return this.form.controls; }
+
+  togglePwd(): void { this.showPwd.set(!this.showPwd()); }
 
   readonly benefits = [
     { icon: 'schedule',        title: 'Smart appointment scheduling',  desc: 'Automated slot management, queue numbers, and patient reminders' },
