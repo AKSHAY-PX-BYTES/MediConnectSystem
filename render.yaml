@@ -59,7 +59,8 @@ services:
     branch: main
     buildCommand: |
       cd frontend
-      echo "export const environment = { production: true, apiUrl: '${API_URL:-}/api' };" > src/environments/environment.prod.ts
+      BACKEND_HOST="${API_HOST:-mediconnect-api.onrender.com}"
+      printf 'export const environment = { production: true, apiUrl: "https://%s/api" };\n' "$BACKEND_HOST" > src/environments/environment.prod.ts
       npm install
       npm run build
     # Path is relative to the repo root; matches Angular's outputPath in angular.json.
@@ -67,15 +68,16 @@ services:
     autoDeploy: true
     pullRequestPreviewsEnabled: false
     envVars:
-      # Render injects the deployed API service URL at build time — no manual edit needed.
-      - key: API_URL
+      # Render injects the actual backend hostname (with any random suffix) at build time.
+      # e.g. mediconnect-api-qi9s.onrender.com — no https:// prefix, we add it above.
+      - key: API_HOST
         fromService:
           name: mediconnect-api
           type: web
           property: host
     routes:
       # SPA fallback — Angular router handles all non-asset paths.
-      # API calls go directly to the backend URL baked into the build via API_URL.
+      # Angular calls the backend directly via the absolute URL baked in during build.
       - type: rewrite
         source: /*
         destination: /index.html
