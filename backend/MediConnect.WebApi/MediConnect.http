@@ -1,0 +1,74 @@
+@host = http://localhost:5080
+
+### Health check
+GET {{host}}/health
+
+### Register a new clinic (creates tenant + clinic admin)
+# @name register
+POST {{host}}/api/auth/register-clinic
+Content-Type: application/json
+
+{
+  "clinicName": "Bright Smile Dental",
+  "adminFirstName": "Nisha",
+  "adminLastName": "Verma",
+  "email": "nisha@brightsmile.io",
+  "password": "Passw0rd!",
+  "phoneNumber": "+91 90000 00000"
+}
+
+### Login with the seeded demo clinic admin
+# @name login
+POST {{host}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@democlinic.io",
+  "password": "Admin@123"
+}
+
+@token = {{login.response.body.accessToken}}
+
+### List doctors (tenant-scoped)
+GET {{host}}/api/doctors
+Authorization: Bearer {{token}}
+
+### Create a patient
+POST {{host}}/api/patients
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "firstName": "John",
+  "lastName": "Doe",
+  "gender": 1,
+  "email": "john.doe@example.com",
+  "phoneNumber": "+91 98888 88888"
+}
+
+### List appointments (tenant-scoped)
+GET {{host}}/api/appointments?page=1&pageSize=20
+Authorization: Bearer {{token}}
+
+### Book an appointment (replace the IDs with real ones)
+POST {{host}}/api/appointments
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "patientId": "00000000-0000-0000-0000-000000000000",
+  "doctorId": "00000000-0000-0000-0000-000000000000",
+  "type": 0,
+  "appointmentDate": "2026-06-10",
+  "startTime": "10:00:00",
+  "symptoms": "Toothache"
+}
+
+### Login as Super Admin (platform owner)
+POST {{host}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "superadmin@mediconnect.io",
+  "password": "SuperAdmin@123"
+}

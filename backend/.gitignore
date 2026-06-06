@@ -1,0 +1,18 @@
+## .NET
+bin/
+obj/
+*.user
+*.suo
+.vs/
+
+## Rider
+.idea/
+
+## EF Core
+*.db
+*.db-shm
+*.db-wal
+
+## Env / secrets
+appsettings.*.local.json
+.env
