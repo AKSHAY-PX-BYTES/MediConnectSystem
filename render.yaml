@@ -57,27 +57,25 @@ services:
     runtime: static
     repo: https://github.com/AKSHAY-PX-BYTES/MediConnectSystem
     branch: main
-    buildCommand: |
-      cd frontend
-      BACKEND_HOST="${API_HOST:-mediconnect-api.onrender.com}"
-      printf 'export const environment = { production: true, apiUrl: "https://%s/api" };\n' "$BACKEND_HOST" > src/environments/environment.prod.ts
-      npm install
-      npm run build
-    # Path is relative to the repo root; matches Angular's outputPath in angular.json.
+    # Simple, reliable build — environment.prod.ts has apiUrl: '/api'
+    # which is forwarded to the backend by the /api/* proxy rewrite below.
+    buildCommand: cd frontend && npm install && npm run build
     staticPublishPath: frontend/dist/mediconnect-web/browser
     autoDeploy: true
     pullRequestPreviewsEnabled: false
-    envVars:
-      # Render injects the actual backend hostname (with any random suffix) at build time.
-      # e.g. mediconnect-api-qi9s.onrender.com — no https:// prefix, we add it above.
-      - key: API_HOST
-        fromService:
-          name: mediconnect-api
-          type: web
-          property: host
     routes:
-      # SPA fallback — Angular router handles all non-asset paths.
-      # Angular calls the backend directly via the absolute URL baked in during build.
+      # ── API proxy ───────────────────────────────────────────────────────
+      # Render does a server-side proxy pass (not a redirect), so the browser
+      # sees a same-origin response — no CORS headers required.
+      #
+      # Blueprint deploys give ALL services the SAME random suffix.
+      # If your frontend is mediconnect-web-qi9s.onrender.com, the backend is
+      # mediconnect-api-qi9s.onrender.com (check Render Dashboard to confirm).
+      - type: rewrite
+        source: /api/*
+        destination: https://mediconnect-api-qi9s.onrender.com/api/*
+
+      # SPA fallback — must be LAST.
       - type: rewrite
         source: /*
         destination: /index.html
