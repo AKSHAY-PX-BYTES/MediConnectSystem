@@ -1,0 +1,78 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Render Blueprint — deploys BOTH services from a single file:
+#   1. mediconnect-api  → Docker web service  (ASP.NET Core 9 API)
+#   2. mediconnect-web  → Static site         (Angular 20 PWA + /api proxy)
+#
+# Docs: https://render.com/docs/blueprint-spec
+#
+# How to use:
+#   Render Dashboard → New + → Blueprint → connect your GitHub repo →
+#   Apply Blueprint → then set ONE secret shown below → Deploy.
+# ─────────────────────────────────────────────────────────────────────────────
+
+services:
+
+  # ── 1. BACKEND — ASP.NET Core 9 API (Docker) ─────────────────────────────
+  - type: web
+    name: mediconnect-api
+    runtime: docker
+    repo: https://github.com/AKSHAY-PX-BYTES/MediConnectSystem
+    branch: main
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: .          # repo root is the build context
+    plan: free
+    region: oregon
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: ASPNETCORE_ENVIRONMENT
+        value: Production
+
+      # ⚠️  SET THIS IN THE RENDER DASHBOARD (never commit the real value).
+      # Neon connection string format:
+      #   Host=ep-xxx-pooler.region.aws.neon.tech;Port=5432;Database=neondb;
+      #   Username=...;Password=...;SSL Mode=Require;Trust Server Certificate=true
+      - key: ConnectionStrings__Default
+        sync: false
+
+      # Render auto-generates a cryptographically secure random value — no action needed.
+      - key: Jwt__Secret
+        generateValue: true
+
+      - key: Jwt__Issuer
+        value: MediConnect
+      - key: Jwt__Audience
+        value: MediConnectClients
+      - key: Jwt__AccessTokenMinutes
+        value: "60"
+      - key: Jwt__RefreshTokenDays
+        value: "7"
+
+      # The frontend service URL (matches the service name "mediconnect-web" below).
+      # Update this if you rename the frontend service or add a custom domain.
+      - key: Cors__Origins__0
+        value: https://mediconnect-web.onrender.com
+
+  # ── 2. FRONTEND — Angular 20 Static Site ─────────────────────────────────
+  - type: web
+    name: mediconnect-web
+    runtime: static
+    repo: https://github.com/AKSHAY-PX-BYTES/MediConnectSystem
+    branch: main
+    buildCommand: cd frontend && npm install && npm run build
+    # Path is relative to the repo root; matches Angular's outputPath in angular.json.
+    staticPublishPath: frontend/dist/mediconnect-web/browser
+    autoDeploy: true
+    pullRequestPreviewsEnabled: false
+    routes:
+      # Render transparently proxies /api/* to the backend, forwarding all
+      # headers (including Authorization). The browser sees same-origin requests
+      # so no CORS configuration is needed on the happy path.
+      - type: rewrite
+        source: /api/*
+        destination: https://mediconnect-api.onrender.com/api/*
+
+      # SPA fallback — Angular router handles all non-asset paths.
+      - type: rewrite
+        source: /*
+        destination: /index.html

@@ -1,0 +1,27 @@
+# Root build-context ignore — applies to both backend and frontend image builds
+# (docker-compose and Render use the repository root as the build context).
+
+# .NET build artifacts
+**/bin/
+**/obj/
+**/out/
+**/publish/
+
+# Node / Angular
+**/node_modules/
+**/dist/
+**/.angular/
+
+# IDE / VCS / OS
+.git/
+.vs/
+.vscode/
+.idea/
+**/*.user
+.DS_Store
+Thumbs.db
+
+# Local config & secrets — never bake into an image
+**/appsettings.*.local.json
+**/.env
+**/*.log

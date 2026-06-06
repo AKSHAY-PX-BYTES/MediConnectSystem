@@ -7,6 +7,7 @@ using MediConnect.Infrastructure.Security;
 using MediConnect.WebApi.Middleware;
 using MediConnect.WebApi.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 
@@ -15,10 +16,26 @@ var builder = WebApplication.CreateBuilder(args);
 // ----- Configuration: allow env-var overrides (e.g. Neon connection string) -----
 builder.Configuration.AddEnvironmentVariables();
 
+// Cloud hosts (Render / Railway / Fly.io) inject the listening port via PORT.
+var port = Environment.GetEnvironmentVariable("PORT");
+if (!string.IsNullOrWhiteSpace(port))
+{
+    builder.WebHost.UseUrls($"http://0.0.0.0:{port}");
+}
+
 // ----- Services -----
 builder.Services.AddControllers();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddEndpointsApiExplorer();
+
+// Respect X-Forwarded-* headers so the app knows it is behind the platform's
+// TLS-terminating reverse proxy (correct scheme/IP for redirects & logging).
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+    options.KnownNetworks.Clear();
+    options.KnownProxies.Clear();
+});
 
 // Current-user / tenant context (one instance shared by both interfaces per request).
 builder.Services.AddScoped<CurrentUserService>();
@@ -87,15 +104,21 @@ builder.Services.AddSwaggerGen(c =>
 var app = builder.Build();
 
 // ----- Pipeline -----
+app.UseForwardedHeaders();
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 
+// Swagger is enabled in all environments so the live API can be verified.
+// Remove or guard this block if you prefer to hide it in production.
+app.UseSwagger();
+app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "MediConnect API v1"));
+
+// HTTPS is terminated at the platform's edge proxy, so only force the
+// redirect when running locally in Development.
 if (app.Environment.IsDevelopment())
 {
-    app.UseSwagger();
-    app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "MediConnect API v1"));
+    app.UseHttpsRedirection();
 }
 
-app.UseHttpsRedirection();
 app.UseCors(SpaCors);
 app.UseAuthentication();
 app.UseAuthorization();

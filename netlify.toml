@@ -1,0 +1,21 @@
+# Netlify configuration for the Angular frontend.
+# Deploy: connect the repo in Netlify; this file drives the build.
+# IMPORTANT: replace YOUR-BACKEND.onrender.com with your real Render API URL.
+
+[build]
+  command = "cd frontend && npm install && npm run build"
+  publish = "frontend/dist/mediconnect-web/browser"
+
+# Proxy API calls to the backend. Because this runs server-side, the browser
+# sees a same-origin request, so no CORS configuration is required.
+[[redirects]]
+  from = "/api/*"
+  to = "https://YOUR-BACKEND.onrender.com/api/:splat"
+  status = 200
+  force = true
+
+# SPA fallback so Angular's client-side router handles deep links.
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

@@ -1,0 +1,21 @@
+# Dependencies & build output
+**/node_modules/
+**/dist/
+**/.angular/
+
+# IDE / VCS
+.git/
+.gitignore
+.vs/
+.vscode/
+.idea/
+
+# Logs & env
+**/*.log
+**/.env
+
+# Backend (not part of the web image)
+backend/
+
+# Docs
+**/*.md

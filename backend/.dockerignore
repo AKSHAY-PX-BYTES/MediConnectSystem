@@ -1,0 +1,23 @@
+# Build artifacts
+**/bin/
+**/obj/
+**/out/
+**/publish/
+
+# IDE / VCS
+.git/
+.gitignore
+.vs/
+.vscode/
+.idea/
+**/*.user
+
+# Local config & secrets (never ship into the image)
+**/appsettings.*.local.json
+**/.env
+
+# Frontend (not part of the API image)
+frontend/
+
+# Docs
+**/*.md

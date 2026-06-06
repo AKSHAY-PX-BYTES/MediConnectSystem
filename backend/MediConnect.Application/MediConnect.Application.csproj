@@ -11,6 +11,14 @@
     <PackageReference Include="FluentValidation" Version="11.10.0" />
     <PackageReference Include="FluentValidation.DependencyInjectionExtensions" Version="11.10.0" />
     <PackageReference Include="MediatR" Version="12.4.1" />
+    <!--
+      EF Core base package — needed for DbSet<T>, IQueryable extensions
+      (AnyAsync, FirstOrDefaultAsync, Include, AsNoTracking, IgnoreQueryFilters,
+      ToListAsync, CountAsync, MaxAsync) used in IApplicationDbContext and all
+      CQRS query/command handlers. No provider is referenced here — the
+      Infrastructure project owns the Npgsql provider.
+    -->
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.0" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="9.0.0" />
   </ItemGroup>
 
